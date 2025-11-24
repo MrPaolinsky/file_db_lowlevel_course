@@ -84,7 +84,7 @@ main (int argc, char *argv[])
                 }
         }
 
-    output_file (dbfd, dbhdr);
+    output_file (dbfd, dbhdr, NULL);
 
     return 0;
 }
