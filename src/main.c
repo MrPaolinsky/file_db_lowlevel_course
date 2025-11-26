@@ -14,7 +14,7 @@ print_usage (char *argv[])
     printf ("\t -n - create new database file\n");
     printf ("\t -f - (required) path to database file\n");
     printf ("\t -l - list the employees\n");
-    printf ("\t -a - add via CSV list of (names,address,salary)\n");
+    printf ("\t -a - add employee (name,addres,salary)\n");
     return;
 }
 
@@ -24,6 +24,7 @@ main (int argc, char *argv[])
     bool newfile = false;
     char *filepath = NULL;
     char *addstring = NULL;
+    bool list = false;
     // Getopt: library to check command line arguments
     int c;
 
@@ -32,7 +33,7 @@ main (int argc, char *argv[])
     struct employee_t *employees;
 
     // n is a boolean, f is a string, thats why it has a : at the end.
-    while ((c = getopt (argc, argv, "nf:a:")) != -1)
+    while ((c = getopt (argc, argv, "nf:a:l")) != -1)
         {
             switch (c)
                 {
@@ -44,6 +45,9 @@ main (int argc, char *argv[])
                     break;
                 case 'a':
                     addstring = optarg;
+                    break;
+                case 'l':
+                    list = true;
                     break;
                 case '?':
                     printf ("Unknow option -%c\n", c);
@@ -100,6 +104,11 @@ main (int argc, char *argv[])
     if (addstring)
         {
             add_employee (dbhdr, &employees, addstring);
+        }
+
+    if (list)
+        {
+            list_employees (dbhdr, employees);
         }
 
     output_file (dbfd, dbhdr, employees);
