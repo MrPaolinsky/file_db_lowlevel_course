@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -9,22 +10,87 @@
 #include "common.h"
 #include "parse.h"
 
-// void
-// list_employees (struct dbheader_t *dbhdr, struct employee_t *employees)
-// {
-// }
-//
-// int
-// add_employee (struct dbheader_t *dbhdr, struct employee_t *employees,
-//               char *addstring)
-// {
-// }
-//
-// int
-// read_employees (int fd, struct dbheader_t *dbhdr,
-//                 struct employee_t **employeesOut)
-// {
-// }
+void
+list_employees (struct dbheader_t *dbhdr, struct employee_t *employees)
+{
+}
+
+int
+add_employee (struct dbheader_t *dbhdr, struct employee_t **employees,
+              char *addstring)
+{
+    if (dbhdr == NULL)
+        return STATUS_ERROR;
+    if (employees == NULL)
+        return STATUS_ERROR;
+    if (*employees == NULL)
+        return STATUS_ERROR;
+    if (addstring == NULL)
+        return STATUS_ERROR;
+
+    char *name = strtok (addstring, ",");
+    if (name == NULL)
+        return STATUS_ERROR;
+    char *addr = strtok (NULL, ",");
+    if (addr == NULL)
+        return STATUS_ERROR;
+    char *hours = strtok (NULL, ",");
+    if (hours == NULL)
+        return STATUS_ERROR;
+
+    struct employee_t *e = *employees; // Copy of employees
+    e = realloc (e, sizeof (struct employee_t) * dbhdr->count + 1);
+    if (e == NULL)
+        {
+            return STATUS_ERROR;
+        }
+
+    dbhdr->count++;
+
+    // strncpy can prevent buffer overflows, since it stops cpoying
+    // a string once it reachs the specified size. It might not add the
+    // required nul terminator, so we add a -1 at the end to add it ourselves
+    // if needed
+    strncpy (e[dbhdr->count - 1].name, name,
+             sizeof (e[dbhdr->count - 1].name) - 1);
+    strncpy (e[dbhdr->count - 1].address, addr,
+             sizeof (e[dbhdr->count - 1].address) - 1);
+    e[dbhdr->count - 1].hours = atoi (hours);
+    *employees = e;
+
+    return STATUS_SUCCESS;
+}
+
+int
+read_employees (int fd, struct dbheader_t *dbhdr,
+                struct employee_t **employeesOut)
+{
+    if (fd < 0)
+        {
+            printf ("Got a bad FD from the user\n");
+            return STATUS_ERROR;
+        }
+
+    int count = dbhdr->count;
+    struct employee_t *employees = calloc (count, sizeof (struct employee_t));
+    if (employees == NULL)
+        {
+            printf ("Malloc failed \n");
+            return STATUS_ERROR;
+        }
+
+    // File offset is already after the header
+    read (fd, employees, count * sizeof (struct employee_t));
+    int i = 0;
+    for (; i < count; i++)
+        {
+            employees[i].hours = ntohl (employees[i].hours);
+        }
+
+    *employeesOut = employees;
+
+    return STATUS_SUCCESS;
+}
 
 int
 output_file (int fd, struct dbheader_t *dbhdr, struct employee_t *employees)
@@ -35,14 +101,24 @@ output_file (int fd, struct dbheader_t *dbhdr, struct employee_t *employees)
             return STATUS_ERROR;
         }
 
+    int realcount = dbhdr->count;
+
     // Parse from host endinanness to network endinanness
     dbhdr->magic = htonl (dbhdr->magic);
-    dbhdr->filesize = htonl (dbhdr->filesize);
+    dbhdr->filesize = htonl (sizeof (struct dbheader_t)
+                             + sizeof (struct employee_t) * realcount);
     dbhdr->count = htons (dbhdr->count);
     dbhdr->version = htons (dbhdr->version);
 
     lseek (fd, 0, SEEK_SET);
     write (fd, dbhdr, sizeof (struct dbheader_t));
+
+    int i = 0;
+    for (; i < realcount; i++)
+        {
+            employees[i].hours = htonl (employees[i].hours);
+            write (fd, &employees[i], sizeof (struct employee_t));
+        }
 
     return STATUS_SUCCESS;
 }
