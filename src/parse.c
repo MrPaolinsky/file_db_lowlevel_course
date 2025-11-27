@@ -14,6 +14,11 @@ void
 list_employees (struct dbheader_t *dbhdr, struct employee_t *employees)
 {
     // printf ("Employees is null? %d\n", employees == NULL);
+    if (dbhdr == NULL)
+        {
+            printf ("Error, no database header provided");
+            return;
+        }
     int i = 0;
     for (; i < dbhdr->count; i++)
         {
