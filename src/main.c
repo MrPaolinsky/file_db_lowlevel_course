@@ -30,7 +30,7 @@ main (int argc, char *argv[])
 
     int dbfd = -1;
     struct dbheader_t *dbhdr = NULL;
-    struct employee_t *employees;
+    struct employee_t *employees = NULL;
 
     // n is a boolean, f is a string, thats why it has a : at the end.
     while ((c = getopt (argc, argv, "nf:a:l")) != -1)
@@ -56,6 +56,11 @@ main (int argc, char *argv[])
                     return -1;
                 }
         }
+
+    // printf ("%d newfile\n", newfile);
+    // printf ("%s filepath\n", filepath);
+    // printf ("%s addstring\n", addstring);
+    // printf ("%d list\n", list);
 
     if (filepath == NULL)
         {
@@ -103,7 +108,11 @@ main (int argc, char *argv[])
 
     if (addstring)
         {
-            add_employee (dbhdr, &employees, addstring);
+            if (add_employee (dbhdr, &employees, addstring) != STATUS_SUCCESS)
+                {
+                    printf ("Error adding employee");
+                    return 0;
+                }
         }
 
     if (list)

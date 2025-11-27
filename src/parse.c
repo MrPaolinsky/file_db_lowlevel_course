@@ -13,6 +13,7 @@
 void
 list_employees (struct dbheader_t *dbhdr, struct employee_t *employees)
 {
+    // printf ("Employees is null? %d\n", employees == NULL);
     int i = 0;
     for (; i < dbhdr->count; i++)
         {
@@ -47,7 +48,7 @@ add_employee (struct dbheader_t *dbhdr, struct employee_t **employees,
         return STATUS_ERROR;
 
     struct employee_t *e = *employees; // Copy of employees
-    e = realloc (e, sizeof (struct employee_t) * dbhdr->count + 1);
+    e = realloc (e, sizeof (struct employee_t) * (dbhdr->count + 1));
     if (e == NULL)
         {
             return STATUS_ERROR;
@@ -59,11 +60,17 @@ add_employee (struct dbheader_t *dbhdr, struct employee_t **employees,
     // a string once it reachs the specified size. It might not add the
     // required nul terminator, so we add a -1 at the end to add it ourselves
     // if needed
+
+    // But this does not
+
     strncpy (e[dbhdr->count - 1].name, name,
              sizeof (e[dbhdr->count - 1].name) - 1);
+
     strncpy (e[dbhdr->count - 1].address, addr,
              sizeof (e[dbhdr->count - 1].address) - 1);
+
     e[dbhdr->count - 1].hours = atoi (hours);
+
     *employees = e;
 
     return STATUS_SUCCESS;
